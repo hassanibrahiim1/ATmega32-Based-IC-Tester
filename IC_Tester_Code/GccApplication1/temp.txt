@@ -1,0 +1,795 @@
+/*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+const c8 *s;
+u8 bt_flag;
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+	LCD_INIT();
+
+	LCD_WRITE_STRING("IC Tester Ready!");
+	_delay_ms(1500);
+	LCD_CLR();
+	LCD_WRITE_STRING("Press to Test");
+	LCD_SET_CURSOR(2, 1);
+	LCD_WRITE_STRING("Is    ______");
+	while (1)
+	{
+		
+		if (DIO_ReadPin(PUSH_BUTTON) == LOW)
+		{
+			bt_flag = 1;
+			while (DIO_ReadPin(PUSH_BUTTON) == LOW);
+		}
+		
+		
+		if (bt_flag)
+		{
+			LCD_SET_CURSOR(2, 6);
+			LCD_WRITE_STRING("           ");
+			LCD_SET_CURSOR(2, 6);
+			s = test_ic();
+			LCD_WRITE_STRING(s);
+			bt_flag = 0;
+		}
+    }
+	
+	return 0; 
+}
+ /********************************************************************************************************************************/
+ /*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+u8 f = 1;
+
+ICMetadata_t ic74280 = {
+	.ic_name = "74280", .pin_count = 14,
+	.pins =
+	{
+		{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+		{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+		{SOCKET_PIN5, INPUT_FREE},  {SOCKET_PIN6, INPUT_FREE},
+		{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN18, OUTPUT},
+		{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, OUTPUT},
+		{SOCKET_PIN21, OUTPUT},		{SOCKET_PIN22, OUTPUT},
+		{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+	},
+	.truth_table =
+	{
+		// Parity Generator/Checker truth table
+		// Pins: (D6, D7, NC, D8, P_EVEN, P_ODD, GND, D0, D1, D2, D3, D4, D5, VCC)
+		{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1}},
+		{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1}}
+	},
+	.truth_table_rows = 10
+	};
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+	LCD_INIT();
+	_delay_ms(10);
+	
+	DIO_WritePin(ic74280.pins[6].channel, ic74280.truth_table[0].pins_logic.pin7);
+	DIO_WritePin(ic74280.pins[13].channel, ic74280.truth_table[0].pins_logic.pin14);
+	
+	for (int i = 0; i < ic74280.truth_table_rows; i++)
+	{
+		DIO_WritePin(ic74280.pins[0].channel, ic74280.truth_table[i].pins_logic.pin1);
+		DIO_WritePin(ic74280.pins[1].channel, ic74280.truth_table[i].pins_logic.pin2);
+									 
+		DIO_WritePin(ic74280.pins[2].channel, ic74280.truth_table[i].pins_logic.pin3);
+		DIO_WritePin(ic74280.pins[3].channel, ic74280.truth_table[i].pins_logic.pin4);
+									 
+		DIO_WritePin(ic74280.pins[7].channel, ic74280.truth_table[i].pins_logic.pin8);
+		DIO_WritePin(ic74280.pins[8].channel, ic74280.truth_table[i].pins_logic.pin9);
+	
+		DIO_WritePin(ic74280.pins[9].channel, ic74280.truth_table[i].pins_logic.pin10);
+		DIO_WritePin(ic74280.pins[10].channel, ic74280.truth_table[i].pins_logic.pin11);
+		
+		DIO_WritePin(ic74280.pins[11].channel, ic74280.truth_table[i].pins_logic.pin12);
+		DIO_WritePin(ic74280.pins[12].channel, ic74280.truth_table[i].pins_logic.pin13);
+		_delay_ms(10);
+
+		if (DIO_ReadPin(ic74280.pins[4].channel) != ic74280.truth_table[i].pins_logic.pin5)
+		{
+			f=0;
+			break;
+		}
+	
+		if (DIO_ReadPin(ic74280.pins[5].channel) != ic74280.truth_table[i].pins_logic.pin6)
+		{
+			f=0;
+			break;
+		}
+		
+	}
+	
+	if (f==1)
+	{
+		LCD_WRITE_STRING("True");
+	}
+	else
+	{
+		LCD_WRITE_STRING("False");
+	}
+	
+	while (1)
+	{
+		
+    }
+	
+	return 0; 
+}
+ /********************************************************************************************************************************/
+ /*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+u8 f = 1;
+
+ICMetadata_t ic4081 = {
+	.ic_name = "4081", .pin_count = 14,
+	.pins =
+	{
+		{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+		{SOCKET_PIN3, INPUT_FREE},	{SOCKET_PIN4, INPUT_FREE},
+		{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, OUTPUT},
+		{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN18, OUTPUT},
+		{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, INPUT_FREE},
+		{SOCKET_PIN21, INPUT_FREE}, {SOCKET_PIN22, OUTPUT},
+		{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+	},
+	.truth_table =
+	{
+		// AND gate truth table
+		// Pins: (A1, B1, Q1, Q2, B2, A2, VSS, A3, B3, Q3, Q4, B4, A4, VDD)
+		{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+		{.pins_logic = {0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1}},
+		{.pins_logic = {1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1}},
+		{.pins_logic = {1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1}}
+	},
+	.truth_table_rows = 4
+	};
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+	LCD_INIT();
+	_delay_ms(10);
+	
+	DIO_WritePin(SOCKET_PIN7, ic4081.truth_table[0].pins_logic.pin7);
+	DIO_WritePin(SOCKET_PIN24, ic4081.truth_table[0].pins_logic.pin14);
+	
+	for (int i = 0; i < ic4081.truth_table_rows; i++)
+	{
+		DIO_WritePin(ic4081.pins[0].channel, ic4081.truth_table[i].pins_logic.pin1);
+		DIO_WritePin(ic4081.pins[1].channel, ic4081.truth_table[i].pins_logic.pin2);
+		_delay_ms(10);
+		
+		DIO_WritePin(ic4081.pins[4].channel, ic4081.truth_table[i].pins_logic.pin5);
+		DIO_WritePin(ic4081.pins[5].channel, ic4081.truth_table[i].pins_logic.pin6);
+		_delay_ms(10);
+		
+// 		DIO_WritePin(ic4081.pins[7].channel, ic4081.truth_table[i].pins_logic.pin8);
+// 		DIO_WritePin(ic4081.pins[8].channel, ic4081.truth_table[i].pins_logic.pin9);
+// 		_delay_ms(10);
+// 		
+// 		DIO_WritePin(ic4081.pins[11].channel, ic4081.truth_table[i].pins_logic.pin12);
+// 		DIO_WritePin(ic4081.pins[12].channel, ic4081.truth_table[i].pins_logic.pin13);
+// 		_delay_ms(10);
+
+		if (DIO_ReadPin(ic4081.pins[2].channel) != ic4081.truth_table[i].pins_logic.pin3)
+		{
+			f=0;
+			break;
+		}
+		
+		
+		if (DIO_ReadPin(ic4081.pins[3].channel) != ic4081.truth_table[i].pins_logic.pin4)
+		{
+			f=0;
+			break;
+		}
+		
+// 		if (DIO_ReadPin(ic4081.pins[9].channel) != ic4081.truth_table[i].pins_logic.pin10)
+// 		{
+// 			f=0;
+// 			break;
+// 		}
+// 		
+// 		if (DIO_ReadPin(ic4081.pins[10].channel) != ic4081.truth_table[i].pins_logic.pin11)
+// 		{
+// 			f=0;
+// 			break;
+// 		}
+	}
+	
+	if (f==1)
+	{
+		LCD_WRITE_STRING("True");
+	}
+	else
+	{
+		LCD_WRITE_STRING("False");
+	}
+	
+	while (1)
+	{
+		
+    }
+	
+	return 0; 
+}
+/********************************************************************************************************************************/
+/*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+u8 f = 1;
+
+ICMetadata_t ic7486 = {
+	.ic_name = "7486", .pin_count = 14,
+	.pins =
+	{
+		{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+		{SOCKET_PIN3, INPUT_FREE},	{SOCKET_PIN4, OUTPUT},
+		{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, INPUT_FREE},
+		{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN18, INPUT_FREE},
+		{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, OUTPUT},
+		{SOCKET_PIN21, INPUT_FREE}, {SOCKET_PIN22, OUTPUT},
+		{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+	},
+	.truth_table =
+	{
+		{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+		{.pins_logic = {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1}},
+		{.pins_logic = {0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1}},
+		{.pins_logic = {1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1}}
+	},
+	.truth_table_rows = 4
+	};
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+	LCD_INIT();
+	_delay_ms(10);
+	
+	DIO_WritePin(ic7486.pins[6].channel, ic7486.truth_table[0].pins_logic.pin7);
+	DIO_WritePin(ic7486.pins[13].channel, ic7486.truth_table[0].pins_logic.pin14);
+	
+	for (int i = 0; i < ic7486.truth_table_rows; i++)
+	{
+// 		DIO_WritePin(ic7486.pins[0].channel, ic7486.truth_table[i].pins_logic.pin1);
+// 		DIO_WritePin(ic7486.pins[1].channel, ic7486.truth_table[i].pins_logic.pin2);
+// 		_delay_ms(10);
+		
+// 		DIO_WritePin(ic7486.pins[3].channel, ic7486.truth_table[i].pins_logic.pin4);
+// 		DIO_WritePin(ic7486.pins[4].channel, ic7486.truth_table[i].pins_logic.pin5);
+// 		_delay_ms(10);
+// 		
+// 		DIO_WritePin(ic7486.pins[8].channel, ic7486.truth_table[i].pins_logic.pin9);
+// 		DIO_WritePin(ic7486.pins[9].channel, ic7486.truth_table[i].pins_logic.pin10);
+// 		_delay_ms(10);
+// 		
+		DIO_WritePin(ic7486.pins[11].channel, ic7486.truth_table[i].pins_logic.pin12);
+		DIO_WritePin(ic7486.pins[12].channel, ic7486.truth_table[i].pins_logic.pin13);
+		_delay_ms(10);
+
+// 		if (DIO_ReadPin(ic7486.pins[2].channel) != ic7486.truth_table[i].pins_logic.pin3)
+// 		{
+// 			f=0;
+// 			break;
+// 		}
+// 		
+		
+// 		if (DIO_ReadPin(ic7486.pins[5].channel) != ic7486.truth_table[i].pins_logic.pin6)
+// 		{
+// 			f=0;
+// 			break;
+// 		}
+		
+// 		if (DIO_ReadPin(ic7486.pins[7].channel) != ic7486.truth_table[i].pins_logic.pin8)
+// 		{
+// 			f=0;
+// 			break;
+// 		}
+// 		
+		if (DIO_ReadPin(ic7486.pins[10].channel) != ic7486.truth_table[i].pins_logic.pin11)
+		{
+			f=0;
+			break;
+		}
+	}
+	
+	if (f==1)
+	{
+		LCD_WRITE_STRING("True");
+	}
+	else
+	{
+		LCD_WRITE_STRING("False");
+	}
+	
+	while (1)
+	{
+		
+    }
+	
+	return 0; 
+}
+ /********************************************************************************************************************************/
+
+/*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+u8 f = 1;
+
+u8 outputs[][6] = {{0,0,0,0,0,0},{1,1,1,1,1,1}};
+		
+u8 inputs[][6] = {{1,1,1,1,1,1},{0,0,0,0,0,0}};
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+// 	DIO_InitPin(SOCKET_PIN1, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN2, INPUT_FREE);
+// 	DIO_InitPin(SOCKET_PIN3, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN4, INPUT_FREE);
+// 	DIO_InitPin(SOCKET_PIN5, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN6, INPUT_FREE);
+// 	DIO_InitPin(SOCKET_PIN7, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN24, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN23, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN22, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN21, INPUT_FREE);
+// 	DIO_InitPin(SOCKET_PIN20, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN19, OUTPUT);
+// 	DIO_InitPin(SOCKET_PIN18, INPUT_FREE);
+	LCD_INIT();
+		
+	DIO_WritePin(PINA6, LOW);
+	DIO_WritePin(PINC0, HIGH);
+	
+	_delay_ms(500);
+	
+	// Iterate through test cases
+	for (u8 i = 0; i < 2; i++)
+	{
+		// output pins
+		DIO_WritePin(PINA0, outputs[i][0]==0?LOW:HIGH);
+		DIO_WritePin(PINA2, outputs[i][1]==0?LOW:HIGH);
+		DIO_WritePin(PINA4, outputs[i][2]==0?LOW:HIGH);
+		DIO_WritePin(PINC5, outputs[i][3]==0?LOW:HIGH);
+		DIO_WritePin(PINC3, outputs[i][4]==0?LOW:HIGH);
+		DIO_WritePin(PINC1, outputs[i][5]==0?LOW:HIGH);
+		_delay_ms(50);
+		
+		// Iterate through input pins
+		if (
+		DIO_ReadPin(PINA1) == (inputs[i][0]==0?LOW:HIGH) &&
+		DIO_ReadPin(PINA3) == (inputs[i][1]==0?LOW:HIGH) &&
+		DIO_ReadPin(PINA5) == (inputs[i][2]==0?LOW:HIGH) &&
+		DIO_ReadPin(PINC6) == (inputs[i][3]==0?LOW:HIGH) &&
+		DIO_ReadPin(PINC4) == (inputs[i][4]==0?LOW:HIGH) &&
+		DIO_ReadPin(PINC2) == (inputs[i][5]==0?LOW:HIGH) 
+		)
+		{
+			continue;
+		}
+		else
+		{
+			f = 0;
+			break;
+		}	
+	}
+	
+	if (f)
+	{
+		LCD_WRITE_STRING("IC detected");
+	}
+	else
+	{
+		LCD_WRITE_STRING("Unknown");
+	}
+	
+	
+	while (1)
+	{
+		
+    }
+	
+	return 0; 
+}
+ 
+
+ /************************************************************************************************/
+ /*
+ * GccApplication1.c
+ *
+ * Created: 11/4/2024 6:11:43 PM
+ * Author : Blu-Ray
+ */ 
+
+#include "main.h"
+
+DIO_PinVolt_type logic;
+
+int main(void)
+{
+    /* Replace with your application code */
+	DIO_INIT();
+	LCD_INIT();
+	
+	DIO_WritePin(PINA1, LOW);  // GND
+	DIO_WritePin(PINA0, HIGH); // VCC
+	
+	DIO_WritePin(PINB0, HIGH);
+	DIO_WritePin(PINB1, HIGH);
+	_delay_ms(10);
+	logic = DIO_ReadPin(PINB2);
+	
+	if (logic==HIGH)
+	{
+		LCD_WRITE_STRING("True");
+	}
+	else
+	{
+		LCD_WRITE_STRING("False");
+	}
+	
+	while (1)
+	{
+		
+		
+    }
+	
+	return 0; 
+}
+
+
+/************************************************/
+
+#include "IC_Tester.h"
+
+#ifndef F_CPU
+#define F_CPU ((u32)(11059200))
+#endif
+#include <util/delay.h>
+
+#define TEST_DELAY 10
+#define TRIES	3
+
+static void init_ic_pins(const ICMetadata_t *ic);
+
+static const c8 *err_message = "Unknown";
+
+const ICMetadata_t ic_metadata[NUM_ICS] = {
+	{
+		.ic_name = "4081", .pin_count = 14,
+		.pins =
+		{
+			{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+			{SOCKET_PIN3, INPUT_FREE},	{SOCKET_PIN4, INPUT_FREE},
+			{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN18, OUTPUT},
+			{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, INPUT_FREE},
+			{SOCKET_PIN21, INPUT_FREE}, {SOCKET_PIN22, OUTPUT},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table =
+		{
+			// AND gate truth table
+			// Pins: (A1, B1, Q1, Q2, B2, A2, VSS, A3, B3, Q3, Q4, B4, A4, VDD)
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1}},
+			{.pins_logic = {1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1}}
+		},
+		.truth_table_rows = 4
+	},
+	{
+		.ic_name = "74196", .pin_count = 14,
+		.pins = 
+		{
+			{SOCKET_PIN1, OUTPUT},      {SOCKET_PIN2, INPUT_FREE},
+			{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, INPUT_FREE},  {SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, OUTPUT},      {SOCKET_PIN18, OUTPUT},
+			{SOCKET_PIN19, INPUT_FREE}, {SOCKET_PIN20, OUTPUT},
+			{SOCKET_PIN21, OUTPUT},		{SOCKET_PIN22, INPUT_FREE},
+			{SOCKET_PIN23, OUTPUT},     {SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table = 
+		{
+			// Example truth table for SN74196N
+			// Pins: (LOAD, QC, C, A, QA, CLK2, GND, CLK1, QB, B, D, QD, CLR, VCC)
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1}},
+			{.pins_logic = {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1}},
+			{.pins_logic = {1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1}}
+		},
+		.truth_table_rows = 10
+	},
+	{
+		.ic_name = "74280", .pin_count = 14,
+		.pins =
+		{
+			{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+			{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, INPUT_FREE},  {SOCKET_PIN6, INPUT_FREE},
+			{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN18, OUTPUT},
+			{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, OUTPUT},
+			{SOCKET_PIN21, OUTPUT},		{SOCKET_PIN22, OUTPUT},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table = 
+		{
+			// Parity Generator/Checker truth table
+			// Pins: (D6, D7, NC, D8, P_EVEN, P_ODD, GND, D0, D1, D2, D3, D4, D5, VCC)
+			{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1}}
+		},
+		.truth_table_rows = 10
+	},
+	{
+		.ic_name = "7486", .pin_count = 14,
+		.pins = 
+		{
+			{SOCKET_PIN1,  OUTPUT},		{SOCKET_PIN2,  OUTPUT},
+			{SOCKET_PIN3,  INPUT_FREE}, {SOCKET_PIN4,  OUTPUT},
+			{SOCKET_PIN5,  OUTPUT},		{SOCKET_PIN6,  INPUT_FREE},
+			{SOCKET_PIN7,  OUTPUT},		{SOCKET_PIN18,  INPUT_FREE},
+			{SOCKET_PIN19,  OUTPUT},	{SOCKET_PIN20, OUTPUT},
+			{SOCKET_PIN21, INPUT_FREE}, {SOCKET_PIN22, OUTPUT},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table = 
+		{
+			// Exclusive OR Gate truth table
+			// Pins: (1A, 1B, 1Y, 2A, 2B, 2Y, GND, 3Y, 3A, 3B, 4Y, 4A, 4B, VCC)
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1}},
+			{.pins_logic = {0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1}},
+			{.pins_logic = {1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1}}
+		},
+		.truth_table_rows = 4
+	},
+	{
+		.ic_name = "74541", .pin_count = 20,
+		.pins = 
+		{
+			{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+			{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN8, OUTPUT},
+			{SOCKET_PIN9, OUTPUT},		{SOCKET_PIN10, OUTPUT},
+			{SOCKET_PIN15, INPUT_FREE},	{SOCKET_PIN16, INPUT_FREE},
+			{SOCKET_PIN17, INPUT_FREE},	{SOCKET_PIN18, INPUT_FREE},
+			{SOCKET_PIN19, INPUT_FREE},	{SOCKET_PIN20, INPUT_FREE},
+			{SOCKET_PIN21, INPUT_FREE},	{SOCKET_PIN22, INPUT_FREE},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT},
+		},
+		.truth_table = 
+		{
+			// Buffer/Line Driver truth table
+			// Pins: (OE1, A1, A2, A3, A4, A5, A6, A7, A8, GND, Y8, Y7, Y6, Y5, Y4, Y3, Y2, Y1, OE2, VCC)
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1}},
+			{.pins_logic = {0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1}}
+		},
+		.truth_table_rows = 10
+	},
+	{
+		.ic_name = "744511", .pin_count = 16,
+		.pins = 
+		{
+			{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+			{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN8, OUTPUT},
+			{SOCKET_PIN17, INPUT_FREE},	{SOCKET_PIN18, INPUT_FREE},		
+			{SOCKET_PIN19, INPUT_FREE},	{SOCKET_PIN20, INPUT_FREE},		
+			{SOCKET_PIN21, INPUT_FREE},	{SOCKET_PIN22, INPUT_FREE},
+			{SOCKET_PIN23, INPUT_FREE},	{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table = 
+		{
+			// BCD-to-7 Segment Decoder truth table
+			// Pins: (B, C, LT, BL, LE, D, A, GND, e, d, c, b, a, g, f, VCC)
+			{.pins_logic = {0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1}},
+			{.pins_logic = {0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1}},
+			{.pins_logic = {1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1}},
+			{.pins_logic = {1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1}},
+			{.pins_logic = {0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1}},
+			{.pins_logic = {0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1}},
+			{.pins_logic = {1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1}},
+			{.pins_logic = {1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1}},
+			{.pins_logic = {0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1}},
+			{.pins_logic = {0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1}}
+		},
+		.truth_table_rows = 10
+	},
+	{
+		.ic_name = "74367", .pin_count = 16,
+		.pins = 
+		{
+			{SOCKET_PIN1, OUTPUT},		{SOCKET_PIN2, OUTPUT},
+			{SOCKET_PIN3, INPUT_FREE},	{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, INPUT_FREE},  {SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, INPUT_FREE},  {SOCKET_PIN8, OUTPUT},
+			{SOCKET_PIN17, INPUT_FREE}, {SOCKET_PIN18, OUTPUT},
+			{SOCKET_PIN19, INPUT_FREE}, {SOCKET_PIN20, OUTPUT},
+			{SOCKET_PIN21, INPUT_FREE}, {SOCKET_PIN22, OUTPUT},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table = 
+		{
+			// Buffer/Line Driver truth table
+			// Pins: (G1, 1A, 1Y, 2A, 2Y, 3A, 3Y, GND, 4Y, 4A, 5Y, 5A, 6Y, 6A, G2, VCC)
+			{.pins_logic = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+			{.pins_logic = {0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1}}
+		},
+		. truth_table_rows = 2
+	},
+	{
+		.ic_name = "4043", .pin_count = 16,
+		.pins = 
+		{
+			{SOCKET_PIN1, INPUT_FREE},	{SOCKET_PIN2, INPUT_FREE},
+			{SOCKET_PIN3, OUTPUT},		{SOCKET_PIN4, OUTPUT},
+			{SOCKET_PIN5, OUTPUT},		{SOCKET_PIN6, OUTPUT},
+			{SOCKET_PIN7, OUTPUT},		{SOCKET_PIN8, OUTPUT},
+			{SOCKET_PIN17, INPUT_FREE},	{SOCKET_PIN18, INPUT_FREE},
+			{SOCKET_PIN19, OUTPUT},		{SOCKET_PIN20, OUTPUT},
+			{SOCKET_PIN21, OUTPUT},		{SOCKET_PIN22, OUTPUT},
+			{SOCKET_PIN23, OUTPUT},		{SOCKET_PIN24, OUTPUT}
+		},
+		.truth_table =
+		{
+			// Quad SR Latches truth table
+			// Pins: (Q4, Q1, R1, S1, E, S2, R2, VSS, Q2, Q3, R3, S3, NC, S4, R4, VDD)
+			{.pins_logic = {1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1}},
+			{.pins_logic = {1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1}},
+			{.pins_logic = {0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1}},
+			{.pins_logic = {1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1}}
+		},
+		.truth_table_rows = 4
+	}
+};
+
+const c8 *test_ic(void) 
+{
+	u8 ic_counter, cases_counter, pin_counter, tries;
+	DIO_PinVolt_type logic;
+	u8 flag = 1;
+
+	for (ic_counter = 0; ic_counter < NUM_ICS; ic_counter++) 
+	{
+		flag = 1;
+		init_ic_pins(ic_metadata + ic_counter);
+		_delay_ms(TEST_DELAY);
+		for (cases_counter = 0; cases_counter < ic_metadata[ic_counter].truth_table_rows; cases_counter++) 
+		{
+			for (pin_counter = 0; pin_counter < ic_metadata[ic_counter].pin_count; pin_counter++) 
+			{
+				if (ic_metadata[ic_counter].pins[pin_counter].status == OUTPUT) 
+				{
+					DIO_WritePin(
+					ic_metadata[ic_counter].pins[pin_counter].channel,
+					READ_PIN(ic_metadata[ic_counter].truth_table[cases_counter].ic_logic, pin_counter)
+					);
+				}
+			}
+			_delay_ms(TEST_DELAY);
+			for (pin_counter = 0; pin_counter < ic_metadata[ic_counter].pin_count; pin_counter++) 
+			{
+				if (ic_metadata[ic_counter].pins[pin_counter].status == INPUT_FREE) 
+				{
+					tries=0;
+					while(tries <= TRIES)
+					{
+						tries++;
+						logic = DIO_ReadPin(ic_metadata[ic_counter].pins[pin_counter].channel);
+						if (READ_PIN(ic_metadata[ic_counter].truth_table[cases_counter].ic_logic, pin_counter) != logic)
+						{
+							flag=0;
+						}
+						else
+						{
+							flag=1;
+							break;
+						}
+					}
+				}
+			}
+			if (flag == 0) 
+			{
+				break;
+			}
+		}
+		if (flag) 
+		{
+			return ic_metadata[ic_counter].ic_name;
+		}
+	}
+	return err_message;
+}
+
+static void init_ic_pins(const ICMetadata_t *ic) 
+{
+	u8 counter;
+	for (counter = 0; counter < ic->pin_count; counter++) 
+	{
+		DIO_InitPin(ic->pins[counter].channel, ic->pins[counter].status);
+		if (ic->pins[counter].status == OUTPUT)
+		{
+			DIO_WritePin(ic->pins[counter].channel, LOW);
+		}
+	}
+}
